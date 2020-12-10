@@ -1,9 +1,11 @@
 # Application windows
 
 from tkinter import *
+from tkinter import messagebox
 from tkinter.font import Font
 import os
-from datetime import date
+from datetime import date, datetime
+from app_database import get_buses, insert_bus, create_ticket
 
 def create_header(root):
 	header = Frame(root)
@@ -95,7 +97,19 @@ def add_bus_window(root):
 
 	form2 = Frame(form)
 
-	Button(form, text='Add Details', width=20, command=lambda: form2.grid(row=7, column=1, columnspan=2)).grid(
+	def show_form2():
+		if len(full_name.get()) < 1:
+			messagebox.showerror('Error', 'Enter the full name.')
+			return
+		if len(contact_no.get()) < 1:
+			messagebox.showerror('Error', 'Enter the contact number.')
+			return
+		if len(address.get("1.0",'end-1c')) < 1:
+			messagebox.showerror('Error', 'Enter the address.')
+			return
+		form2.grid(row=7, column=1, columnspan=2)
+
+	Button(form, text='Add Details', width=20, command=show_form2).grid(
 		row=6, column=1, columnspan=2,
 		pady=(5, 5)
 	)
@@ -103,9 +117,11 @@ def add_bus_window(root):
 	operator = StringVar()
 	Label(form2, text='Operator: ').grid(row=1, column=1)
 	Entry(form2, textvariable=operator).grid(row=1, column=2)
-	bus_type = StringVar()
+	bus_type = StringVar(value='AC')
 	Label(form2, text='Bus type: ').grid(row=2, column=1)
-	Entry(form2, textvariable=bus_type).grid(row=2, column=2)
+	# bus_type = StringVar(value='AC')
+	OptionMenu(form2, bus_type, 'AC', *(['Non-AC', 'AC Sleeper', 'Non-AC Sleeper'])).grid(row=2, column=2)
+	# Entry(form2, textvariable=bus_type).grid(row=2, column=2)
 	bus_from = StringVar()
 	Label(form2, text='From: ').grid(row=3, column=1)
 	Entry(form2, textvariable=bus_from).grid(row=3, column=2)
@@ -113,22 +129,100 @@ def add_bus_window(root):
 	Label(form2, text='To: ').grid(row=4, column=1)
 	Entry(form2, textvariable=bus_to).grid(row=4, column=2)
 	bus_date = StringVar()
-	Label(form2, text='Date: ').grid(row=5, column=1)
+	Label(form2, text='Date (dd/mm/yyyy): ').grid(row=5, column=1)
 	Entry(form2, textvariable=bus_date).grid(row=5, column=2)
-	bus_dep = StringVar()
+	bus_dep = StringVar(value='12:00 PM')
 	Label(form2, text='Departure time: ').grid(row=6, column=1)
 	Entry(form2, textvariable=bus_dep).grid(row=6, column=2)
-	bus_arr = StringVar()
+	bus_arr = StringVar(value='12:00 PM')
 	Label(form2, text='Arrival time: ').grid(row=7, column=1)
 	Entry(form2, textvariable=bus_arr).grid(row=7, column=2)
-	fare = DoubleVar()
+	fare = DoubleVar(value=100.00)
 	Label(form2, text='Fare: ').grid(row=8, column=1)
 	Entry(form2, textvariable=fare).grid(row=8, column=2)
-	seats = IntVar()
+	seats = IntVar(value=36)
 	Label(form2, text='Seats: ').grid(row=9, column=1)
 	Entry(form2, textvariable=seats).grid(row=9, column=2)
 
-	Button(form2, text='Save', width=18, command=lambda: ()).grid(
+	def add_bus_fn():
+		# messagebox.showerror('Error', 'Feature not implemented yet.')
+		if len(full_name.get()) < 1:
+			messagebox.showerror('Error', 'Enter the full name.')
+			return
+		if len(contact_no.get()) < 1:
+			messagebox.showerror('Error', 'Enter the contact number.')
+			return
+		if len(address.get("1.0",'end-1c')) < 1:
+			messagebox.showerror('Error', 'Enter the address.')
+			return
+		if len(operator.get()) < 1:
+			messagebox.showerror('Error', 'Enter the operator.')
+			return
+		if len(bus_from.get()) < 1:
+			messagebox.showerror('Error', 'Fill the "From" field.')
+			return
+		if len(bus_to.get()) < 1:
+			messagebox.showerror('Error', 'Fill the "To" field.')
+			return
+		if len(bus_date.get()) < 1:
+			messagebox.showerror('Error', 'Enter the date.')
+			return
+		try:
+			datetime.strptime(bus_date.get(), '%d/%m/%Y').date()
+		except:
+			messagebox.showerror('Error', 'Invalid date.')
+			return
+		if len(bus_dep.get()) < 1:
+			messagebox.showerror('Error', 'Enter the departure time.')
+			return
+		if len(bus_arr.get()) < 1:
+			messagebox.showerror('Error', 'Enter the arrival time.')
+			return
+		if len(bus_arr.get()) < 1:
+			messagebox.showerror('Error', 'Enter the arrival time.')
+			return
+		try:
+			fare.get()
+		except:
+			messagebox.showerror('Error', 'Enter the fare.')
+			return
+		try:
+			seats.get()
+		except:
+			messagebox.showerror('Error', 'Enter the number of seats.')
+			return
+		# 'id': 1,
+		# 'name': 'Kamla Travels',
+		# 'type': 'AC',
+		# 'from': 'Guna',
+		# 'to': 'Indore',
+		# 'date': date(2020, 12, 25),
+		# 'dep': '09:15 AM',
+		# 'arr': '02:30 PM',
+		# 'fare': 650.00,
+		# 'seats': 10
+		bus = {
+			'name': operator.get(),
+			'type': bus_type.get(),
+			'from': bus_from.get(),
+			'to': bus_to.get(),
+			'date': datetime.strptime(bus_date.get(), '%d/%m/%Y').date(),
+			'dep': bus_dep.get(),
+			'arr': bus_arr.get(),
+			'fare': round(fare.get(), 2),
+			'seats': seats.get()
+		}
+		admin = {
+			'name': full_name.get(),
+			'phone': contact_no.get(),
+			'address': address.get("1.0",'end-1c')
+		}
+		insert_bus(bus, admin)
+		root.wm_deiconify()
+		window.destroy()
+
+
+	Button(form2, text='Save', width=18, command=add_bus_fn).grid(
 		row=10, column=1, columnspan=2,
 		pady=(5, 5)
 	)
@@ -156,44 +250,42 @@ def search_bus_window(root):
 	Label(form, text='To: ').grid(row=3, column=1)
 	Entry(form, textvariable=bus_to).grid(row=3, column=2)
 	bus_date = StringVar()
-	Label(form, text='Date: ').grid(row=4, column=1)
+	Label(form, text='Date (dd/mm/yyyy): ').grid(row=4, column=1)
 	Entry(form, textvariable=bus_date).grid(row=4, column=2)
 
+	Label(form, text='Leave the date empty to query all dates.').grid(row=5, column=1, columnspan=2)
+
 	def buses_found():
-		data = [
-			{
-				'id': 1,
-				'name': 'Kamla Travels',
-				'type': 'AC',
-				'from': 'Guna',
-				'to': 'Indore',
-				'date': date(2020, 12, 25),
-				'dep': '09:15 AM',
-				'arr': '02:30 PM',
-				'fare': 650.00,
-				'seats': 10
-			},
-			{
-				'id': 2,
-				'name': 'Harsh Travels',
-				'type': 'Non-AC',
-				'from': 'Guna',
-				'to': 'Indore',
-				'date': date(2020, 12, 25),
-				'dep': '12:00 PM',
-				'arr': '04:30 PM',
-				'fare': 600.00,
-				'seats': 5
-			}
-		]
+		if len(bus_from.get()) < 1:
+			messagebox.showerror('Error', 'Fill the "From" field.')
+			return
+		if len(bus_to.get()) < 1:
+			messagebox.showerror('Error', 'Fill the "To" field.')
+			return
+		# if len(bus_date.get()) < 1:
+		# 	messagebox.showerror('Error', 'Enter the date.')
+		# 	return
+		if len(bus_date.get()) > 0:
+			try:
+				datetime.strptime(bus_date.get(), '%d/%m/%Y').date()
+			except:
+				messagebox.showerror('Error', 'Invalid date.')
+				return
+		query = {
+			'type': bus_type.get(),
+			'from': bus_from.get(),
+			'to': bus_to.get(),
+			'date': datetime.strptime(bus_date.get(), '%d/%m/%Y').date() if len(bus_date.get()) > 0 else None
+		}
+		data = get_buses(query)
 		buses_found_window(root, window, data)
 
 	Button(form, text='Home', width=18, command=lambda: (root.wm_deiconify(), window.destroy())).grid(
-		row=5, column=1,
+		row=6, column=1,
 		pady=(5, 5)
 	)
 	Button(form, text='Search', width=18, command=buses_found).grid(
-		row=5, column=2,
+		row=6, column=2,
 		pady=(5, 5)
 	)
 
@@ -236,12 +328,30 @@ def buses_found_window(root, parent, data):
 		Label(table, text=str(bus['seats'])).grid(row=row, padx=(3, 3), column=9)
 		Radiobutton(table, variable=selected_bus, value=bus['id']).grid(row=row, padx=(3, 3), column=10)
 		row += 1
+	
+	Label(table, text='Seats: ').grid(row=row, padx=(3, 3), column=9)
+	seats = IntVar(value=1)
+	Entry(table, textvariable=seats).grid(row=row, padx=(3, 3), column=10)
 
 	def book_ticket():
-		...
+		if selected_bus.get() < 1:
+			messagebox.showerror('Error', 'Select a bus to book.')
+			return
+		try:
+			seats.get()
+		except:
+			messagebox.showerror('Error', 'Enter the number of seats.')
+			return
+		if seats.get() < 1:
+			messagebox.showerror('Error', 'Invalid number of seats.')
+			return
+		create_ticket(selected_bus.get(), seats.get())
+		root.wm_deiconify()
+		window.destroy()
 	
 	table.grid(row=1, column=1, columnspan=20)
-	Button(table_parent, text='Book', width=6, font=('Arial', 14), command=book_ticket).grid(row=2, column=20)
+	book_button = Button(table_parent, text='Book', width=6, font=('Arial', 14), command=book_ticket)
+	book_button.grid(row=2, column=20)
 
 	table_parent.pack(pady=(2, 20))
 
