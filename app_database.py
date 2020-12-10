@@ -135,12 +135,11 @@ def init_db():
 		db.commit()
 	
 def insert_bus(bus, admin):
-
 	bus_tuple = (
 		bus['name'],
 		get_type_id(bus['type']),
-		bus['from'],
-		bus['to'],
+		bus['from'].upper(),
+		bus['to'].upper(),
 		bus['date'],
 		bus['dep'],
 		bus['arr'],
@@ -205,8 +204,8 @@ def filter_bus(bus):
 		'id': bus[0],
 		'name': bus[1],
 		'type': get_type_name(bus[2]),
-		'from': bus[3],
-		'to': bus[4],
+		'from': bus[3].upper(),
+		'to': bus[4].upper(),
 		'date': datetime.strptime(bus[5], '%Y-%m-%d').date(),
 		'dep': bus[6],
 		'arr': bus[7],
@@ -220,8 +219,8 @@ def unfilter_bus(bus):
 		bus['id'],
 		bus['name'],
 		get_type_id(bus['type']),
-		bus['from'],
-		bus['to'],
+		bus['from'].upper(),
+		bus['to'].upper(),
 		bus['date'],
 		bus['dep'],
 		bus['arr'],
@@ -243,8 +242,8 @@ def get_all_buses():
 def get_buses(query):
 	bus_query_tuple = (
 		get_type_id(query['type']),
-		query['from'],
-		query['to'],
+		query['from'].upper(),
+		query['to'].upper(),
 		query['date']
 	)
 	buses = []

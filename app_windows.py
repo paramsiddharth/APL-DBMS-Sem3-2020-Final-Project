@@ -342,7 +342,7 @@ def buses_found_window(root, parent, data):
 		except:
 			messagebox.showerror('Error', 'Enter the number of seats.')
 			return
-		if seats.get() < 1:
+		if seats.get() < 1 or seats.get() > tuple(filter(lambda bus: bus['id'] == selected_bus.get(), data))[0]['seats']:
 			messagebox.showerror('Error', 'Invalid number of seats.')
 			return
 		create_ticket(selected_bus.get(), seats.get())
