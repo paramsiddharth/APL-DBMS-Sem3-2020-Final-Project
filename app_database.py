@@ -50,7 +50,9 @@ scripts = {
 		SELECT 
 			`id`, `op`, `type`, `from`, `to`, `date`, `dep`, `arr`, `fare`, `seats`, `admin_id`
 		FROM
-			buses;
+			buses
+		WHERE
+			`seats` > 0 AND;
 	''',
 	'get_buses': '''
 		SELECT 
@@ -58,6 +60,7 @@ scripts = {
 		FROM
 			buses
 		WHERE
+			`seats` > 0 AND
 			`type` = ? AND
 			`from` = ? AND
 			`to` = ? AND
@@ -70,6 +73,7 @@ scripts = {
 		FROM
 			buses
 		WHERE
+			`seats` > 0 AND
 			`type` = ? AND
 			`from` = ? AND
 			`to` = ?
@@ -85,7 +89,6 @@ scripts = {
 		LIMIT 1
 		;
 	''',
-	'flush_empty_buses': 'DELETE FROM buses WHERE `seats` = 0;',
 	'update_seats': '''
 		UPDATE
 			buses
@@ -97,13 +100,6 @@ scripts = {
 	''',
 	'get_type_id': 'SELECT `id` FROM bus_types WHERE `name` = ? LIMIT 1;',
 	'get_type_name': 'SELECT `name` FROM bus_types WHERE `id` = ? LIMIT 1;',
-	'tickets': '''
-		CREATE TABLE IF NOT EXISTS tickets (
-			`bus_id` INTEGER NOT NULL,
-			`seats` INTEGER DEFAULT 1,
-			FOREIGN KEY (`bus_id`) REFERENCES buses (`id`)
-		);
-	''',
 	'get_admin_id': '''
 		SELECT `id` FROM bus_admins 
 		WHERE 
@@ -115,6 +111,28 @@ scripts = {
 		INSERT OR IGNORE INTO bus_admins (
 			`name`, `phone`, `address`
 		) VALUES (?, ?, ?);
+	''',
+	'tickets': '''
+		CREATE TABLE IF NOT EXISTS tickets (
+			`bus_id` INTEGER NOT NULL,
+			`seats` INTEGER NOT NULL,
+			`time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (`bus_id`) REFERENCES buses (`id`)
+		);
+	''',
+	'ticket_trigger':'''
+		CREATE TRIGGER log_ticket
+		BEFORE UPDATE ON buses
+		WHEN NEW.`seats` < OLD.`seats`
+		BEGIN
+			INSERT INTO tickets (
+				`bus_id`,
+				`seats`
+			) VALUES (
+				NEW.`id`,
+				OLD.`seats` - NEW.`seats`
+			);
+		END;
 	'''
 }
 bus_types = {
@@ -132,6 +150,7 @@ def init_db():
 		cur.execute(scripts['bus_admins'])
 		cur.execute(scripts['buses'])
 		cur.execute(scripts['tickets'])
+		cur.execute(scripts['ticket_trigger'])
 		db.commit()
 	
 def insert_bus(bus, admin):
@@ -279,16 +298,10 @@ def create_ticket(bus_id, seats=1):
 	bus = get_bus(bus_id)
 	if seats <= bus['seats']:
 		bus['seats'] -= seats
-		if bus['seats'] == 0:
-			with sqlite3.connect('data.db') as db:
-				cur = db.cursor()
-				cur.execute(scripts['flush_empty_buses'])
-				db.commit()
-		else:
-			with sqlite3.connect('data.db') as db:
-				cur = db.cursor()
-				cur.execute(scripts['update_seats'], (bus['seats'], bus['id']))
-				db.commit()
+		with sqlite3.connect('data.db') as db:
+			cur = db.cursor()
+			cur.execute(scripts['update_seats'], (bus['seats'], bus['id']))
+			db.commit()
 
 
 if __name__ != '__main__':
