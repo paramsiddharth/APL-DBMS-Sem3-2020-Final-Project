@@ -79,6 +79,29 @@ scripts = {
 			`to` = ?
 		;
 	''',
+	'get_buses_all_types': '''
+		SELECT 
+			`id`, `op`, `type`, `from`, `to`, `date`, `dep`, `arr`, `fare`, `seats`, `admin_id`
+		FROM
+			buses
+		WHERE
+			`seats` > 0 AND
+			`from` = ? AND
+			`to` = ? AND
+			`date` = ?
+		;
+	''',
+	'get_buses_all_dates_all_types': '''
+		SELECT 
+			`id`, `op`, `type`, `from`, `to`, `date`, `dep`, `arr`, `fare`, `seats`, `admin_id`
+		FROM
+			buses
+		WHERE
+			`seats` > 0 AND
+			`from` = ? AND
+			`to` = ?
+		;
+	''',
 	'get_bus_by_id': '''
 		SELECT 
 			`id`, `op`, `type`, `from`, `to`, `date`, `dep`, `arr`, `fare`, `seats`, `admin_id`
@@ -121,7 +144,7 @@ scripts = {
 		);
 	''',
 	'ticket_trigger':'''
-		CREATE TRIGGER log_ticket
+		CREATE TRIGGER IF NOT EXISTS log_ticket
 		BEFORE UPDATE ON buses
 		WHEN NEW.`seats` < OLD.`seats`
 		BEGIN
@@ -218,7 +241,6 @@ def create_admin(admin):
 		db.commit()
 
 def filter_bus(bus):
-	# `id`, `op`, `type`, `from`, `to`, `date`, `dep`, `arr`, `fare`, `seats`, `admin_id`
 	bus_filtered = {
 		'id': bus[0],
 		'name': bus[1],
@@ -266,16 +288,29 @@ def get_buses(query):
 		query['date']
 	)
 	buses = []
-	if query['date'] is not None:
-		with sqlite3.connect('data.db') as db:
-			cur = db.cursor()
-			cur.execute(scripts['get_buses'], bus_query_tuple)
-			buses = cur.fetchall()
+	if query['type'] == 'All Types':
+		bus_query_tuple = bus_query_tuple[1:]
+		if query['date'] is not None:
+			with sqlite3.connect('data.db') as db:
+				cur = db.cursor()
+				cur.execute(scripts['get_buses_all_types'], bus_query_tuple)
+				buses = cur.fetchall()
+		else:
+			with sqlite3.connect('data.db') as db:
+				cur = db.cursor()
+				cur.execute(scripts['get_buses_all_dates_all_types'], bus_query_tuple[:2])
+				buses = cur.fetchall()
 	else:
-		with sqlite3.connect('data.db') as db:
-			cur = db.cursor()
-			cur.execute(scripts['get_buses_all_dates'], bus_query_tuple[:3])
-			buses = cur.fetchall()
+		if query['date'] is not None:
+			with sqlite3.connect('data.db') as db:
+				cur = db.cursor()
+				cur.execute(scripts['get_buses'], bus_query_tuple)
+				buses = cur.fetchall()
+		else:
+			with sqlite3.connect('data.db') as db:
+				cur = db.cursor()
+				cur.execute(scripts['get_buses_all_dates'], bus_query_tuple[:3])
+				buses = cur.fetchall()
 	return [
 		filter_bus(bus) for bus in buses
 	]

@@ -62,12 +62,7 @@ def main():
 	add_bus.grid(row=2, pady=(5, 5))
 	search_bus.grid(row=3, pady=(5, 20))
 
-	return {
-		'root': root,
-		'add_bus': add_bus,
-		'search_bus': search_bus
-	}
-	# root.mainloop()
+	return root
 
 # Add bus window
 def add_bus_window(root):
@@ -145,7 +140,6 @@ def add_bus_window(root):
 	Entry(form2, textvariable=seats).grid(row=9, column=2)
 
 	def add_bus_fn():
-		# messagebox.showerror('Error', 'Feature not implemented yet.')
 		if len(full_name.get()) < 1:
 			messagebox.showerror('Error', 'Enter the full name.')
 			return
@@ -191,16 +185,6 @@ def add_bus_window(root):
 		except:
 			messagebox.showerror('Error', 'Enter the number of seats.')
 			return
-		# 'id': 1,
-		# 'name': 'Kamla Travels',
-		# 'type': 'AC',
-		# 'from': 'Guna',
-		# 'to': 'Indore',
-		# 'date': date(2020, 12, 25),
-		# 'dep': '09:15 AM',
-		# 'arr': '02:30 PM',
-		# 'fare': 650.00,
-		# 'seats': 10
 		bus = {
 			'name': operator.get(),
 			'type': bus_type.get(),
@@ -218,6 +202,7 @@ def add_bus_window(root):
 			'address': address.get("1.0",'end-1c')
 		}
 		insert_bus(bus, admin)
+		messagebox.showinfo('Success', 'Bus successfully added!')
 		root.wm_deiconify()
 		window.destroy()
 
@@ -262,9 +247,6 @@ def search_bus_window(root):
 		if len(bus_to.get()) < 1:
 			messagebox.showerror('Error', 'Fill the "To" field.')
 			return
-		# if len(bus_date.get()) < 1:
-		# 	messagebox.showerror('Error', 'Enter the date.')
-		# 	return
 		if len(bus_date.get()) > 0:
 			try:
 				datetime.strptime(bus_date.get(), '%d/%m/%Y').date()
@@ -346,6 +328,7 @@ def buses_found_window(root, parent, data):
 			messagebox.showerror('Error', 'Invalid number of seats.')
 			return
 		create_ticket(selected_bus.get(), seats.get())
+		messagebox.showinfo('Success', 'Ticket successfully purchased!')
 		root.wm_deiconify()
 		window.destroy()
 	
