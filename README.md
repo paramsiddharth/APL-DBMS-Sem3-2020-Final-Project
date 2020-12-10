@@ -14,6 +14,7 @@ Systems.
 - UI implemented entirely in Tkinter.
 - Powerful error-handling; Negligible chances of
   failure.
+- Version-controlled by Git for the progress report.
 
 ## Dependencies
 - Python 3.8+
